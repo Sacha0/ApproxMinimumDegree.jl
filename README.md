@@ -5,6 +5,43 @@ degree algorithm. This is a prototype; prefer [AMD](http://faculty.cse.tamu.edu/
 ([AMD.jl](https://github.com/JuliaOptimizers/AMD.jl)) or [HSL-MC47](http://www.hsl.rl.ac.uk/catalogue/mc47.html)
 for anything beyond experimentation.
 
+## Usage demo
+
+```julia
+julia> import ApproxMinimumDegree: amd
+julia> N = 9;
+julia> A = sparse(SymTridiagonal(2*ones(Int, N), -1*ones(Int, N-1)));
+julia> rp = randperm(N);
+julia> rpA = A[rp, rp];
+julia> pamd = amd(rpA);
+
+julia> full(rpA)
+9x9 Array{Int64,2}:
+  2   0   0   0  -1   0  -1   0   0
+  0   2  -1   0   0   0   0  -1   0
+  0  -1   2  -1   0   0   0   0   0
+  0   0  -1   2   0  -1   0   0   0
+ -1   0   0   0   2   0   0   0  -1
+  0   0   0  -1   0   2   0   0   0
+ -1   0   0   0   0   0   2  -1   0
+  0  -1   0   0   0   0  -1   2   0
+  0   0   0   0  -1   0   0   0   2
+  
+julia> full(rpA[pamd, pamd])
+9x9 Array{Int64,2}:
+  2  -1   0   0   0   0   0   0   0
+ -1   2  -1   0   0   0   0   0   0
+  0  -1   2  -1   0   0   0   0   0
+  0   0  -1   2  -1   0   0   0   0
+  0   0   0  -1   2  -1   0   0   0
+  0   0   0   0  -1   2  -1   0   0
+  0   0   0   0   0  -1   2  -1   0
+  0   0   0   0   0   0  -1   2  -1
+  0   0   0   0   0   0   0  -1   2
+```
+`ApproxMinDegree.amd(...)` presently returns a tuple `(perm, iperm)` where `perm` is
+an assembly-tree postordering and `iperm` is the corresponding inverse permutation.
+
 ## References
 
 ApproxMinimumDegree.jl was written with extensive reference to the following materials
