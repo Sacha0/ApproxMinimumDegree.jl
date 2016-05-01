@@ -42,6 +42,72 @@ julia> full(rpA[pamd, pamd])
 `ApproxMinDegree.amd(...)` presently returns a tuple `(perm, iperm)` where `perm` is
 an assembly-tree postordering and `iperm` is the corresponding inverse permutation.
 
+## Performance demo
+
+```julia
+julia> # julia -O --check-bounds=no
+julia> versioninfo()
+Julia Version 0.4.3
+Commit a2f713d* (2016-01-12 21:37 UTC)
+Platform Info:
+  System: Darwin (x86_64-apple-darwin14.5.0)
+  CPU: Intel(R) Core(TM) i7-3520M CPU @ 2.90GHz
+  WORD_SIZE: 64
+  BLAS: libopenblas (DYNAMIC_ARCH NO_AFFINITY Sandybridge)
+  LAPACK: libopenblas
+  LIBM: libopenlibm
+  LLVM: libLLVM-3.3
+julia> using AMD
+julia> using Benchmarks
+julia> using ApproxMinimumDegree
+julia> begin
+
+       "Pretty-print benchmark mean evaluation time and 95% CIs."
+       function prettytimes(bench)
+           stats = Benchmarks.SummaryStatistics(bench)
+           timecenter = stats.elapsed_time_center
+           timelower = get(stats.elapsed_time_lower)
+           timeupper = get(stats.elapsed_time_upper)
+           # based on Benchmarks.pretty_time_string
+           tscale, tunits =
+               timecenter < 10^4 ? (10^0, "ns") :
+               timecenter < 10^7 ? (10^3, "μs") :
+               timecenter < 10^10 ? (10^6, "ms") :
+                                   (10^9, " s")
+           @sprintf("%4.1f%s [%4.1f%s, %4.1f%s]",
+               timecenter/tscale, tunits, timelower/tscale, tunits, timeupper/tscale, tunits)
+       end
+
+       "Five-point-stencil finite-difference approximation of the bivariate Laplacian."
+       function laplacian(N)
+           thediag = speye(N, N)
+           offdiag = sparse(2:N, 1:(N-1), 1, N, N)
+           tridiag = 2*thediag - offdiag - offdiag'
+           kron(tridiag, thediag) + kron(thediag, tridiag)
+       end
+
+       A = laplacian(10^3); # matrix order is N^2 = 10^6!
+
+       Benchmarks.@benchmarkable(nativeamd, nothing, ApproxMinimumDegree.amd(A), nothing)
+       nativeamdres = Benchmarks.execute(nativeamd, 30, 30)
+       Benchmarks.@benchmarkable(wrappedamd, nothing, AMD.amd(A), nothing)
+       wrappedamdres = Benchmarks.execute(wrappedamd, 30, 30)
+       
+       println("\nApproxMinimumDegree : $(prettytimes(nativeamdres))")
+       println("AMD                 : $(prettytimes(wrappedamdres))")
+
+       end;
+
+ApproxMinimumDegree : 633.5ms [624.5ms, 642.4ms]
+AMD                 : 613.8ms [582.9ms, 644.8ms]
+```
+Room for optimization on this demo problem remains.
+
+ApproxMinimumDegree.jl does not yet perform aggressive absorption nor dense row delay. As
+such, ApproxMinimumDegree.jl should perform poorly relative to AMD and HSL-MC47 where
+those optimizations significantly impact runtime. Neither aggressive absorption nor
+dense row delay should significantly impact the preceding demo.
+
 ## References
 
 ApproxMinimumDegree.jl was written with extensive reference to the following materials
