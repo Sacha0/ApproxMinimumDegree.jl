@@ -44,6 +44,51 @@ an assembly-tree postordering and `iperm` is the corresponding inverse permutati
 
 ## Performance demo
 
+Preordering quality:
+
+```julia
+julia> using AMD
+julia> using ApproxMinimumDegree
+julia> begin
+
+       "Five-point-stencil finite-difference approximation of the bivariate Laplacian."
+       function laplacian(N)
+          thediag = speye(N, N)
+          offdiag = sparse(2:N, 1:(N-1), 1, N, N)
+          tridiag = 2*thediag - offdiag - offdiag'
+          kron(tridiag, thediag) + kron(thediag, tridiag)
+       end
+
+       A = laplacian(30); # matrix order N^2 = 900
+       pnative = ApproxMinimumDegree.amd(A);
+       pwrapped = AMD.amd(A);
+
+       end;
+
+julia> cholfact(A, perm = 1:30^2)
+Base.SparseMatrix.CHOLMOD.Factor{Float64}
+type:          LLt
+method: simplicial
+maxnnz:      27029
+nnz:         27029
+
+julia> cholfact(A, perm = pwrapped)
+Base.SparseMatrix.CHOLMOD.Factor{Float64}
+type:          LLt
+method: simplicial
+maxnnz:      10231
+nnz:         10231
+
+julia> cholfact(A, perm = pnative)
+Base.SparseMatrix.CHOLMOD.Factor{Float64}
+type:          LLt
+method: simplicial
+maxnnz:      10082
+nnz:         10082
+```
+
+Runtime:
+
 ```julia
 julia> # julia -O --check-bounds=no
 julia> versioninfo()
