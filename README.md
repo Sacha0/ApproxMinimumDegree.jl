@@ -153,6 +153,26 @@ such, ApproxMinimumDegree.jl should perform poorly relative to AMD and HSL-MC47 
 those optimizations significantly impact runtime. Neither aggressive absorption nor
 dense row delay should significantly impact the preceding demo.
 
+## Future
+(Beyond a better interface and additional optimizations.)
+
+ApproxMinimumDegree.jl was designed with two overarching features in mind. The first feature
+is abstraction and separation of the common components of local preordering methods --- the
+quotient graph model, the node weight priority queue, and the node weight updating scheme.
+
+On the one hand, this abstraction and decoupling cost some peformance relative to local
+preordering codes that admit tight coupling, though the second feature ---
+cache-friendliness, insofar as possible --- mitigates this performance cost.
+
+On the other hand, this abstraction and decoupling is ApproxMinimumDegree.jl's future:
+Recyling local preordering methods' major infrastructure (the quotient graph and node weight
+priority queue) enables rapid instantiation of high-performance local preordering methods by
+leaving only the node weight updating scheme for a new local preordering method to be written.
+
+Hence the long-term vision for ApproxMinimumDegree.jl is evolution into LocalPreorderings.jl,
+a high-performance framework for experimentation with local preordering methods and a
+collection of established methods.
+
 ## References
 
 ApproxMinimumDegree.jl was written with extensive reference to the following materials
